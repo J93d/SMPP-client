@@ -40,7 +40,7 @@ def submit_sm_load(socket):
         
     d_npi=input('Enter Destination Numbering Plan Indicator (NPI)(Default 1): ')
     
-    if o_npi:
+    if d_npi:
         dest_addr_npi=pack(">b",int(d_npi))
     else:
         dest_addr_npi=pack(">b",1)
@@ -165,7 +165,7 @@ def submit_sm_load(socket):
                     if len(msg)<=255:
                         destination_addr=str(x).encode()
                         sequence_number=randint(1,65536)
-                        short_message=msg+str(j).encode()
+                        short_message=msg.encode()
                         sm_length=pack(">b",len(short_message))
                         command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
                         data=pack('!4I',command_length,command_id,command_status,sequence_number)

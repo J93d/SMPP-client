@@ -3,6 +3,7 @@
 from struct import pack
 from random import randint
 from textwrap import wrap
+from gsm_encode import *
 
 def submit_sm(socket):
     command_id=0x00000004
@@ -48,7 +49,7 @@ def submit_sm(socket):
     
     e_class=input('Enter ESM class(Default 0): ')
     
-    if e_class:                                                         #Need to modify!!
+    if e_class:                                                         
         esm_class=pack(">B",int(e_class))
     else:
         esm_class=pack(">B",0)
