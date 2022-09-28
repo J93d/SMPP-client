@@ -3,7 +3,6 @@
 from struct import pack
 from random import randint
 from textwrap import wrap
-from gsm_encode import *
 
 def submit_sm(socket):
     command_id=0x00000004
@@ -137,6 +136,11 @@ def submit_sm(socket):
             command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
             data=pack('!4I',command_length,command_id,command_status,sequence_number)
             socket.send(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message)
+            try:
+                _buffer=socket.recv(300)
+                print(_buffer)
+            except socket.timeout:
+                print('Timed Out')
         elif len(msg)>255:
             sequence_number=randint(1,65536)
             temp_msg_wrapd=wrap(msg,width=255)
