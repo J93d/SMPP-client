@@ -12,9 +12,9 @@ def submit_sm(socket):
     s_type=input("Enter the Service Type (Default NULL): ")
     
     if s_type:
-        service_type=s_type.encode('utf-8')
+        service_type=s_type.encode()
     else:
-        service_type=str('CMT').encode('utf-8')
+        service_type=str('CMT').encode()
         
     o_ton=input('Enter Source Type of Nymber (TON)(Default 1): ')
     
@@ -30,7 +30,7 @@ def submit_sm(socket):
     else:
         source_addr_npi=pack(">B",1)
         
-    source_addr=input('Enter Source Address: ').encode('utf-8')
+    source_addr=input('Enter Source Address: ').encode()
     
     d_ton=input('Enter Destination Type of Nymber (TON)(Default 1): ')
     
@@ -46,7 +46,7 @@ def submit_sm(socket):
     else:
         dest_addr_npi=pack(">B",1)
         
-    destination_addr=input('Enter Destination Address: ').encode('utf-8')
+    destination_addr=input('Enter Destination Address: ').encode()
     
     e_class=input('Enter ESM class(Default 0): ')
     
@@ -69,9 +69,9 @@ def submit_sm(socket):
     else:
         priority_flag=pack(">B",0)
     
-    schedule_delivery_time=input('Enter Scheduled Delivery Time(Default NULL): ').encode('utf-8')
+    schedule_delivery_time=input('Enter Scheduled Delivery Time(Default NULL): ').encode()
     
-    validity_period=input('Enter Validity Period(Default NULL): ').encode('utf-8')
+    validity_period=input('Enter Validity Period(Default NULL): ').encode()
     
     r_dr=input('Enter Registered Delivery Required(Default 0): ')
     
@@ -106,11 +106,7 @@ def submit_sm(socket):
     if len(msg)<=255:
     #if len(msg)<=150:
         sequence_number=randint(1,65536)
-        try:
-            short_message=msg.encode('utf-8')
-        except UnicodeDecodeError:
-            short_message_u=unicode(msg,'utf-8')
-            short_message=short_message_u.encode('utf-16')
+        short_message=msg.encode()
         sm_length=pack(">B",len(short_message))
         command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
         data=pack('!4I',command_length,command_id,command_status,sequence_number)
@@ -129,11 +125,7 @@ def submit_sm(socket):
         #ieid=pack(">H",3)
         #msg_identifier=pack(">B",randint(0,255))
         for i in range(0,len(temp_msg_wrapd)):
-            try:
-                short_message=temp_msg_wrapd[i].encode('utf-8')
-            except UnicodeDecodeError:
-                short_message_u=unicode(temp_msg_wrapd[i],'utf-8')
-                short_message=short_message_u.encode('utf-16')
+            short_message=temp_msg_wrapd[i].encode()
             #sm_length=pack(">B",(len(short_message)+int(6)))
             sm_length=pack(">B",(len(short_message)))
             ####################################optional parameters################################
