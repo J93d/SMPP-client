@@ -2,10 +2,7 @@
 
 from struct import pack
 from random import randint
-import os
-import sys
 from textwrap import wrap
-import csv
 import time
 
 def submit_sm_load(socket):
@@ -14,9 +11,9 @@ def submit_sm_load(socket):
     s_type=input("Enter the Service Type (Default NULL): ")
     
     if s_type:
-        service_type=s_type.encode('utf-8')
+        service_type=s_type.encode()
     else:
-        service_type=str('CMT').encode('utf-8')
+        service_type=str('CMT').encode()
     
     o_ton=input('Enter Source Type of Nymber (TON)(Default 1): ')
     
@@ -32,7 +29,7 @@ def submit_sm_load(socket):
     else:
         source_addr_npi=pack(">b",1)
         
-    source_addr=input('Enter Source Address: ').encode('utf-8')
+    source_addr=input('Enter Source Address: ').encode()
         
     d_ton=input('Enter Destination Type of Nymber (TON)(Default 1): ')
     
@@ -81,9 +78,9 @@ def submit_sm_load(socket):
     else:
         priority_flag=pack(">b",0)
     
-    schedule_delivery_time=input('Enter Scheduled Delivery Time(Default NULL): ').encode('utf-8')
+    schedule_delivery_time=input('Enter Scheduled Delivery Time(Default NULL): ').encode()
     
-    validity_period=input('Enter Validity Period(Default NULL): ').encode('utf-8')
+    validity_period=input('Enter Validity Period(Default NULL): ').encode()
     
     r_dr=input('Enter Registered Delivery Required(Default 0): ')
     
@@ -123,78 +120,100 @@ def submit_sm_load(socket):
         for j in range(0,d_range,tps_in):
             for x in range(d_addr,d_addr+tps_in):
                 d_addr=d_addr+1
-                #if len(msg)<=255:
-                if len(msg)<=150:
-                    destination_addr=str(x).encode('utf-8')
-                    sequence_number=randint(1,65536)
-                    try:
-                        short_message=msg+str(j).encode('utf-8')
-                    except UnicodeDecodeError:
-                        short_message_u=unicode(msg,'utf-8')
-                        short_message=short_message_u.encode('utf-16')
-                    sm_length=pack(">b",len(short_message))
-                    command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
-                    data=pack('!4I',command_length,command_id,command_status,sequence_number)
-                    socket.send(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message)
-                    if multi_submit==9:
-                        try:
-                            socket.recv(300)
-                        except socket.timeout:
-                            print('Timed Out')
-                        multi_submit=0
-                    else:
-                        multi_submit+=1
-
-                    variable_1=variable_1+1
-                #elif len(msg)>255:
-                elif len(msg)>150:
-                    esm_class=pack(">B",64)
-                    destination_addr=str(x).encode('utf-8')
-                    sequence_number=randint(1,65536)
-                    temp_msg_wrapd=wrap(msg,width=159)
-                    #temp_msg_wrapd=wrap(msg,width=255)
-                    if len(temp_msg_wrapd)>255:
-                        print('Too Long Message')
-                        return None
-                    #sar_seq=randint(1,255)
-                    udh_length=pack(">B",5)
-                    ieid=pack(">H",3)
-                    msg_identifier=pack(">B",randint(0,255))
-                    for i in range(0,len(temp_msg_wrapd)):
-                        try:
-                            short_message=temp_msg_wrapd[i].encode('utf-8')
-                        except UnicodeDecodeError:
-                            short_message_u=unicode(temp_msg_wrapd[i],'utf-8')
-                            short_message=short_message_u.encode('utf-16')
-                        sm_length=pack(">B",(len(short_message)+int(6)))
-                        #sm_length=pack(">B",(len(short_message)))
-                        ####################################optional parameters################################
-                        ##sar_msg_ref_num
-                        #tag1=pack(">H",524)
-                        #length1=pack(">H",2)
-                        #ref1=pack(">H",sar_seq)
-                        #sar_msg_ref_num=(tag1+length1+ref1)
-                        ##sar_segment_seqnum
-                        #tag2=pack(">H",527)
-                        #length2=pack(">H",1)
-                        #seq2=pack(">B",(i+1))
-                        #sar_segment_seqnum=(tag2+length2+seq2)
-                        ##sar_total_segments
-                        #tag3=pack(">H",526)
-                        #length3=pack(">H",1)
-                        #size3=pack(">B",len(temp_msg_wrapd))
-                        #sar_total_segments=(tag3+length3+size3)
-                        
-                        msg_parts=pack(">B",len(temp_msg_wrapd))
-                        msg_part_num=pack(">B",(i+1))
-                        
-                        command_length=39+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
-                        #command_length=49+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
+                if e_class:
+                    if len(msg)<=150:
+                        destination_addr=str(x).encode()
+                        sequence_number=randint(1,65536)
+                        short_message=msg+str(j).encode()
+                        sm_length=pack(">b",len(short_message))
+                        command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
                         data=pack('!4I',command_length,command_id,command_status,sequence_number)
-                        socket.send(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+udh_length+ieid+msg_identifier+msg_parts+msg_part_num+short_message)#+sar_msg_ref_num+sar_segment_seqnum+sar_total_segments)
-                        socket.recv(2024)
+                        socket.send(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message)
+                        if multi_submit==9:
+                            try:
+                                socket.recv(300)
+                            except socket.timeout:
+                                print('Timed Out')
+                            multi_submit=0
+                        else:
+                            multi_submit+=1
+
                         variable_1=variable_1+1
-                        #socket.send(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message+sar_msg_ref_num+sar_segment_seqnum+sar_total_segments)
+                    elif len(msg)>150:
+                        esm_class=pack(">B",64)
+                        destination_addr=str(x).encode()
+                        sequence_number=randint(1,65536)
+                        temp_msg_wrapd=wrap(msg,width=159)
+                        if len(temp_msg_wrapd)>255:
+                            print('Too Long Message')
+                            return None
+                        udh_length=pack(">B",5)
+                        ieid=pack(">H",3)
+                        msg_identifier=pack(">B",randint(0,255))
+                        for i in range(0,len(temp_msg_wrapd)):
+                            short_message=temp_msg_wrapd[i].encode()
+                            sm_length=pack(">B",(len(short_message)+int(6)))
+                            msg_parts=pack(">B",len(temp_msg_wrapd))
+                            msg_part_num=pack(">B",(i+1))
+
+                            command_length=39+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
+                            data=pack('!4I',command_length,command_id,command_status,sequence_number)
+                            socket.send(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+udh_length+ieid+msg_identifier+msg_parts+msg_part_num+short_message)#+sar_msg_ref_num+sar_segment_seqnum+sar_total_segments)
+                            socket.recv(2024)
+                            variable_1=variable_1+1
+                else:
+                    if len(msg)<=255:
+                        destination_addr=str(x).encode()
+                        sequence_number=randint(1,65536)
+                        short_message=msg+str(j).encode()
+                        sm_length=pack(">b",len(short_message))
+                        command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
+                        data=pack('!4I',command_length,command_id,command_status,sequence_number)
+                        socket.send(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message)
+                        if multi_submit==9:
+                            try:
+                                socket.recv(300)
+                            except socket.timeout:
+                                print('Timed Out')
+                            multi_submit=0
+                        else:
+                            multi_submit+=1
+
+                        variable_1=variable_1+1
+                    elif len(msg)>255:
+                        destination_addr=str(x).encode()
+                        sequence_number=randint(1,65536)
+                        temp_msg_wrapd=wrap(msg,width=255)
+                        if len(temp_msg_wrapd)>255:
+                            print('Too Long Message')
+                            return None
+                        sar_seq=randint(1,255)
+                        for i in range(0,len(temp_msg_wrapd)):
+                            short_message=temp_msg_wrapd[i].encode()
+                            sm_length=pack(">B",(len(short_message)))
+                            ####################################optional parameters################################
+                            ##sar_msg_ref_num
+                            tag1=pack(">H",524)
+                            length1=pack(">H",2)
+                            ref1=pack(">H",sar_seq)
+                            sar_msg_ref_num=(tag1+length1+ref1)
+                            ##sar_segment_seqnum
+                            tag2=pack(">H",527)
+                            length2=pack(">H",1)
+                            seq2=pack(">B",(i+1))
+                            sar_segment_seqnum=(tag2+length2+seq2)
+                            ##sar_total_segments
+                            tag3=pack(">H",526)
+                            length3=pack(">H",1)
+                            size3=pack(">B",len(temp_msg_wrapd))
+                            sar_total_segments=(tag3+length3+size3)
+
+                            command_length=49+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
+                            data=pack('!4I',command_length,command_id,command_status,sequence_number)
+                            socket.send(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message+sar_msg_ref_num+sar_segment_seqnum+sar_total_segments)
+                            socket.recv(2024)
+                            variable_1=variable_1+1
+
             #socket.recv(5120)
             time.sleep(1.0-((time.time()-start_time)%1.0))
             #print(1.0-((time.time()-start_time)%1.0))
