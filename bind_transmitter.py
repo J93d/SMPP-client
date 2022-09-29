@@ -3,7 +3,9 @@
 from struct import pack
 from random import randint
 
-def bind_transmitter(socket):
+from smpp_socket import smpp_socket
+
+def bind_transmitter():
     command_id=0x00000002
     command_status=0x00000000
     sequence_number=randint(1,4294967294)
@@ -27,4 +29,4 @@ def bind_transmitter(socket):
     command_length=len(system_id)+len(password)+len(system_type)+23
     data=pack('!4I',command_length,command_id,command_status,sequence_number)
     data=(data+system_id+b'\x00'+password+b'\x00'+system_type+b'\x00'+interface_version+addr_ton+addr_npi+b'\x00')
-    socket.send(data)
+    smpp_socket(data)
