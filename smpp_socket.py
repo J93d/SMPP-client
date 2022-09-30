@@ -23,32 +23,33 @@
 #        socket.close()
 
 class smpp_socket:
-    import socket
+
     def __init__(self, address=(),data=bytearray(),close=0):
         self.address=address
         self.data=data
         self.close=close
 
     def conn(address):
-        global socket
+        import socket
+        global sock_conn
         try:
-            socket=socket.socket()
+            sock_conn=socket.socket()
         except:
             print('Not Connected')
         
         try:
-            socket.connect((address))
+            sock_conn.connect((address))
             print('Connected')
         except:
             print('Connect Failed')
 
     def send_data(data):
-        socket.send(data)
+        sock_conn.send(data)
         try:
-            buffer=socket.recv(300)
-        except socket.timeout:
+            buffer=sock_conn.recv(300)
+        except sock_conn.timeout:
             print("Timed Out")
     
     def disconnect(close):
-        socket.close()
+        sock_conn.close()
 
