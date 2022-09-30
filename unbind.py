@@ -11,6 +11,6 @@ def unbind():
     command_status=0x00000000
     sequence_number=randint(1,4294967294)
     data=pack('!4I',command_length,command_id,command_status,sequence_number)
-    smpp_socket(data)
+    smpp_socket.conn(data)
 
     #return data

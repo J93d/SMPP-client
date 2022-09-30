@@ -29,4 +29,4 @@ def bind_transceiver():
     command_length=len(system_id)+len(password)+len(system_type)+23
     data=pack('!4I',command_length,command_id,command_status,sequence_number)
     data=(data+system_id+b'\x00'+password+b'\x00'+system_type+b'\x00'+interface_version+addr_ton+addr_npi+b'\x00')
-    smpp_socket(data)
+    smpp_socket.send_data(data)

@@ -17,7 +17,7 @@ from submit_multi import *
 from data_sm import *
 from error_response import *
 from submit_sm_load import *
-from smpp_socket import *
+from smpp_socket import smpp_socket
 
 
 
@@ -31,7 +31,7 @@ port=input('Enter the port: ')
 
 address=(host,int(port))
 
-smpp_socket(address)
+smpp_socket.conn(address)
         
 while n<=0:
         
@@ -53,7 +53,7 @@ while n<=0:
             submit_sm_load()
     elif int(option)==5:
         unbind()
-        smpp_socket(close=1)
+        smpp_socket.disconnect(close=1)
         n+=1
     else:
         print("Wrong Input")

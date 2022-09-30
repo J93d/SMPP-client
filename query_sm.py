@@ -31,4 +31,4 @@ def query_sm():
     command_length=14+len(source_addr)+len(message_id)
     data=pack('!4I',command_length,command_id,command_status,sequence_number)
     data=(data+message_id+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00')
-    smpp_socket(data)
+    smpp_socket.conn(data)
