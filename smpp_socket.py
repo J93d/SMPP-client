@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
-import socket
-
 def smpp_socket(address=(),data=bytearray(),close=0):
+    import socket
     if address:
         try:
             socket=socket.socket()
@@ -10,7 +9,7 @@ def smpp_socket(address=(),data=bytearray(),close=0):
             print('Not Connected')
         
         try:
-            socket.connect(address)
+            socket.connect((address))
             print('Connected')
         except:
             print('Connect Failed')
