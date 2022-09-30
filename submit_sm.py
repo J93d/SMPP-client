@@ -4,7 +4,7 @@ from struct import pack
 from random import randint
 from textwrap import wrap
 
-from .smpp_socket import smpp_socket
+from smpp_socket import smpp_socket
 
 def submit_sm():
     command_id=0x00000004

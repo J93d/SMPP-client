@@ -7,7 +7,6 @@ from bind_receiver import *
 from bind_transmitter import *
 from query_sm import *
 from submit_sm import *
-from deliver_sm import *
 from unbind import *
 from replace_sm import *
 from cancel_sm import *
