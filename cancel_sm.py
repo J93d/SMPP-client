@@ -53,4 +53,4 @@ def cancel_sm():
     command_length=20+len(service_type)+len(source_addr)+len(destination_addr)+len(message_id)
     data=pack('!4I',command_length,command_id,command_status,sequence_number)
     data=(data+service_type+b'\x00'+message_id+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00')
-    smpp_socket.conn(data)
+    smpp_socket.send_data(data)
