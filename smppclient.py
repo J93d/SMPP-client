@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+from time import sleep
 
 from generic_nack import *
 from bind_receiver import *  
@@ -17,6 +18,7 @@ from data_sm import *
 from error_response import *
 from submit_sm_load import *
 from smpp_socket import smpp_socket
+from multiprocessing.connection import Client
 
 
 
@@ -31,6 +33,8 @@ port=input('Enter the port: ')
 address=(host,int(port))
 
 smpp_socket.conn(address)
+
+multi_connect=Client(('localhost',9459), authkey=b'passowrd')
         
 while n<=0:
         
@@ -52,7 +56,11 @@ while n<=0:
             submit_sm_load()
     elif int(option)==5:
         unbind()
+        sleep(2)
         smpp_socket.disconnect(close=1)
+        sleep(5)
+        multi_connect.send('close')
+
         n+=1
     else:
         print("Wrong Input")
