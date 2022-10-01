@@ -111,12 +111,9 @@ def submit_sm():
             data=pack('!4I',command_length,command_id,command_status,sequence_number)
             data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message)
             smpp_socket.send_data(data)
-#            try:
-#                buffer=socket.recv(300)
-#            except socket.timeout:
-#                print("Timed Out")
         elif len(msg)>150:
-            esm_class=pack(">B",64)       
+            esm_class=pack(">B",64)
+            sequence_number=randint(1,65536)       
             temp_msg_wrapd=wrap(msg,width=150)
             if len(temp_msg_wrapd)>255:
                 print('Too Long Message')
@@ -134,25 +131,16 @@ def submit_sm():
                 command_length=39+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
                 data=pack('!4I',command_length,command_id,command_status,sequence_number)
                 data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+udh_length+ieid+msg_identifier+msg_parts+msg_part_num+short_message)
-                smpp_socket.send_data(data)
-#                try:
-#                    buffer=socket.recv(300)
-#                except socket.timeout:
-#                    print("Timed Out")
-                
+                smpp_socket.send_data(data)                
     else:                                                         #This is for SAR message
         if len(msg)<=255:
             sequence_number=randint(1,65536)
             short_message=msg.encode()
-            sm_length=pack(">B",len(short_message))
+            sm_length=pack(">I",len(short_message))
             command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
             data=pack('!4I',command_length,command_id,command_status,sequence_number)
             data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message)
             smpp_socket.send_data(data)
-#            try:
-#                _buffer=socket.recv(300)
-#            except socket.timeout:
-#                print('Timed Out')
         elif len(msg)>255:
             sequence_number=randint(1,65536)
             temp_msg_wrapd=wrap(msg,width=255)
@@ -184,7 +172,3 @@ def submit_sm():
                 data=pack('!4I',command_length,command_id,command_status,sequence_number)
                 data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message+sar_msg_ref_num+sar_segment_seqnum+sar_total_segments)        
                 smpp_socket.send_data(data)
-#                try:
-#                    _buffer=socket.recv(300)
-#                except socket.timeout:
-#                    print('Timed Out')
