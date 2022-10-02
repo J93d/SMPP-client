@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from asyncio import subprocess
 import sys
 from time import sleep
 
@@ -35,6 +36,8 @@ address=(host,int(port))
 smpp_socket.conn(address)
 
 multi_connect=Client(('localhost',9459), authkey=b'passowrd')
+
+subprocess.Popen([sys.executable, "python parser_client.py"])
         
 while n<=0:
         
