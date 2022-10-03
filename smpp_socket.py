@@ -22,12 +22,12 @@ class smpp_socket:
             print('Connect Failed')
 
     def send_data(data):
-        from multiprocessing.connection import Client
-        multi_connect=Client(('localhost',9459), authkey=b'passowrd')
+        from struct import unpack
         sock_conn.send(data)
         try:
-            buffer=sock_conn.recv(300)
-            multi_connect.send(buffer)
+            buffer=sock_conn.recv(100)
+            l=list(unpack('!I',buffer[4:8]))
+            if l[0]==‭2147483649‬,‭2147483650‬,‭2147483651,‭2147483652,‭2147483654,‭2147483655
         except sock_conn.timeout:
             print("Timed Out")
     
