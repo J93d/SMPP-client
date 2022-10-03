@@ -18,7 +18,7 @@ from data_sm import *
 from error_response import *
 from submit_sm_load import *
 from smpp_socket import smpp_socket
-from multiprocessing.connection import Client
+
 
 
 
@@ -34,7 +34,6 @@ address=(host,int(port))
 
 smpp_socket.conn(address)
 
-multi_connect=Client(('localhost',9459))
 
         
 while n<=0:
@@ -59,9 +58,6 @@ while n<=0:
         unbind()
         sleep(2)
         smpp_socket.disconnect(close=1)
-        sleep(5)
-        multi_connect.send('close')
-
         n+=1
     else:
         print("Wrong Input")
