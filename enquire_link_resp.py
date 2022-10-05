@@ -1,2 +1,7 @@
+from struct import unpack
+from error_codes import error_codes
+
 def enquire_link_resp(buffer):
-    pass
+    l=list(unpack('!I',buffer[8:12]))
+    status=error_codes(int(l[0]))
+    print("Bind Status: ",status)

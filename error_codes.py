@@ -134,6 +134,6 @@ def error_codes(code):
     elif hex(code) == hex(0x00000112):
         return str("ESME_RINVBCASTCHANIND")
     elif hex(code) >= hex(0x00000400) and hex(code) <= hex(0x000004FF):
-        return str("Reserved for MC vendor specific errors")
+        return str("MC vendor specific errors")
     else:
-        return str("All other values reserved")
+        return str("Reserved")

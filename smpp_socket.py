@@ -41,21 +41,21 @@ class smpp_socket:
             buffer=sock_conn.recv(100)
             l=list(unpack('!I',buffer[4:8]))
             if l[0]==2147483649:
-                bind_receiver_resp(buffer)
+                bind_receiver_resp(buffer)          #Done
             elif l[0]==2147483650:
-                bind_transmitter_resp(buffer)
+                bind_transmitter_resp(buffer)          #Done
             elif l[0]==2147483651:
                 query_sm_resp(buffer)
             elif l[0]==2147483652:
                 submit_sm_resp(buffer)
             elif l[0]==2147483654:
-                unbind_resp(buffer)
+                unbind_resp(buffer)          #Done
             elif l[0]==2147483655:
                 replace_sm_resp(buffer)
             elif l[0]==2147483656:
                 cancel_sm_resp(buffer)
             elif l[0]==2147483657:
-                bind_transceiver_resp(buffer)
+                bind_transceiver_resp(buffer)          #Done
             elif l[0]==2147483669:
                 enquire_link_resp(buffer)
             elif l[0]==2147483681:
