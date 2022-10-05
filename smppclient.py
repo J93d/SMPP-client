@@ -12,7 +12,6 @@ from unbind import *
 from replace_sm import *
 from cancel_sm import *
 from bind_transceiver import *
-#from enquire_link import *
 from submit_multi import *
 from data_sm import *
 from error_response import *

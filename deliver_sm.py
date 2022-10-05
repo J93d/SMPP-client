@@ -1,6 +1,6 @@
 from struct import pack, unpack
 from error_codes import error_codes
-from smpp_socket import smpp_socket
+from smpp_socket import *
 
 
 def deliver_sm(buffer):
