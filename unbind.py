@@ -4,6 +4,9 @@ from struct import pack
 from random import randint
 
 from smpp_socket import smpp_socket
+import logging
+
+logger=logging.getLogger(__name__)
 
 def unbind():
     command_length=16
@@ -11,6 +14,8 @@ def unbind():
     command_status=0x00000000
     sequence_number=randint(1,4294967294)
     data=pack('!4I',command_length,command_id,command_status,sequence_number)
-    smpp_socket.send_data(data)
-
-    #return data
+    unbind_sent=smpp_socket.send_data(data)
+    if unbind_sent==True:
+        logger.debug('Unbind sent successfully')
+    else:
+        logger.error('Unbind not sent. Reason: {}'.format(unbind_sent))

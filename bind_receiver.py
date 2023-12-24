@@ -3,6 +3,9 @@
 from struct import pack
 from random import randint
 from smpp_socket import smpp_socket
+import logging
+
+logger=logging.getLogger(__name__)
 
 def bind_receiver():
     command_id=0x00000001
@@ -28,6 +31,8 @@ def bind_receiver():
     command_length=len(system_id)+len(password)+len(system_type)+23
     data=pack('!4I',command_length,command_id,command_status,sequence_number)
     data=(data+system_id+b'\x00'+password+b'\x00'+system_type+b'\x00'+interface_version+addr_ton+addr_npi+b'\x00')
-    smpp_socket.send_data(data)
-#    with open ("received","a+") as f:
-#        f.write(socket.recv(1024).decode())
+    bind_sent=smpp_socket.send_data(data)
+    if bind_sent==True:
+        logger.debug('Bind Receiver sent successfully')
+    else:
+        logger.error('Bind Receiver not sent. Reason: {}'.format(bind_sent))
