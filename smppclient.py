@@ -2,6 +2,10 @@
 
 
 from time import sleep
+import os
+import sys
+import logging
+from logging.handlers import RotatingFileHandler
 
 from generic_nack import *
 from bind_receiver import *  
@@ -14,14 +18,25 @@ from cancel_sm import *
 from bind_transceiver import *
 from submit_multi import *
 from data_sm import *
-from error_response import *
 from submit_sm_load import *
 from smpp_socket import smpp_socket
 
+log_formatter=logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+log_file='smpp_client.log'
 
+file_handler=RotatingFileHandler(log_file, maxBytes=1e6, backupCount=3)
+file_handler.setFormatter(log_formatter)
+file_handler.setLevel(logging.INFO)
 
-
-
+logging.basicConfig(
+    level=logging.DEBUG
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        file_handler
+    ]
+)
+stream_handler=next(handler for handler in logging.getLogger().handlers if isinstance(handler, logging.StreamHandler))
 
 n=0
 
