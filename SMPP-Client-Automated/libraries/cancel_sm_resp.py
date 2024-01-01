@@ -1,7 +1,10 @@
 from struct import unpack
-from error_codes import error_codes
+from .error_codes import error_codes
+import logging
+
+logger=logging.getLogger(__name__)
 
 def cancel_sm_resp(buffer):
     l=list(unpack('!I',buffer[8:12]))
     status=error_codes(int(l[0]))
-    #print("CancelSM Status: ",status)
+    logger.info("CancelSM Status: {}".format(status))

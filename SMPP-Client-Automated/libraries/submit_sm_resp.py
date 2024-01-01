@@ -1,6 +1,6 @@
 from email import message
 from struct import pack, unpack
-from error_codes import error_codes
+from .error_codes import error_codes
 import logging
 
 logger=logging.getLogger(__name__)

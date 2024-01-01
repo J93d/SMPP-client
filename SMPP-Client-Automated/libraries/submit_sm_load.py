@@ -4,8 +4,13 @@ from struct import pack
 from random import randint
 from textwrap import wrap
 import time
+import math
 
-from smpp_socket import smpp_socket
+from .deliver_sm import deliver_sm
+from .smpp_socket import smpp_socket
+import logging
+
+logger=logging.getLogger(__name__)
 
 def submit_sm_load():
     command_id=0x00000004
@@ -111,36 +116,80 @@ def submit_sm_load():
         sm_default_msg_id=pack(">b",int(default_mid))
     else:
         sm_default_msg_id=pack(">b",0)
+
+    pl=input('Enter payload type udh/sar/payload(Default sar): ')
+
+    if pl:
+        payload=pl.lower()
+    else:
+        payload=str('sar')
+
+    en=input('Enter for specific encoding type Latin/Unicode(If default leave blank): ')
+
+    if en:
+        encoding=en.lower()
+    else:
+        encoding=str('default')
         
     msg=input('Enter your message: ')
+
+    if encoding=="latin":
+        msg_encoded=msg.encode('iso-8859-1')
+    elif encoding=="unicode":
+        msg_encoded=msg.encode('utf-16')
+    elif encoding=='default':
+        msg.encode()
+    else:
+        logger.error("Encoding type error.")
+
     start_time=time.time()
-    #for j in d_addr:
-    variable_1=0
-    multi_submit=0
+
     while time.time()<=(start_time+load_duration):
-        d_addr=d_addr1
+        logger.error("Time left in load.... {}.format(math.ceil(abs(time.time()-(start_time+load_duration))))")
         for j in range(0,d_range,tps_in):
             for x in range(d_addr,d_addr+tps_in):
                 d_addr=d_addr+1
-                if e_class:
-                    if len(msg)<=150:
+                if payload=='udh':
+                    if len(msg_encoded)<=152:
                         destination_addr=str(x).encode()
                         sequence_number=randint(1,65536)
-                        short_message=msg+str(j).encode()
+                        short_message=msg_encoded
                         sm_length=pack(">b",len(short_message))
                         command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
                         data=pack('!4I',command_length,command_id,command_status,sequence_number)
                         data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message)
-                        smpp_socket.send_data(data)
-                        variable_1=variable_1+1
-                    elif len(msg)>150:
-                        esm_class=pack(">B",64)
+                        if int(r_dr)==1:
+                            msg_sent=smpp_socket.send_data(data)
+                            if msg_sent==True:
+                                logger.debug('SubmitSM sent successfully')
+                            else:
+                                logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+                            status=deliver_sm()
+                            if status:
+                                logger.debug('DeliverSM Received and Response sent')
+                            else:
+                                logger.error('DeliverSM not received.')
+                        else:
+                            msg_sent=smpp_socket.send_data(data)
+                            if msg_sent==True:
+                                logger.debug('SubmitSM sent successfully')
+                            else:
+                                logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+                    elif len(msg_encoded)>152:
+                        esm_class=pack(">B",(int(e_class)+64))
                         destination_addr=str(x).encode()
                         sequence_number=randint(1,65536)
-                        temp_msg_wrapd=wrap(msg,width=150)
+                        temp_msg_wrapd=[]
+
+                        for i in range(0,len(msg_encoded),152):
+                            if len(msg_encoded)<(i+152):
+                                temp_msg_wrapd.append(msg_encoded[i:])
+                            else:
+                                temp_msg_wrapd.append(msg_encoded[i:(i+152)])
+
                         if len(temp_msg_wrapd)>255:
-                            print('Too Long Message')
-                            return None
+                            logger.error('Too Long Message')
+                            return False
                         udh_length=pack(">B",5)
                         ieid=pack(">H",3)
                         msg_identifier=pack(">B",randint(0,255))
@@ -153,25 +202,63 @@ def submit_sm_load():
                             command_length=39+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
                             data=pack('!4I',command_length,command_id,command_status,sequence_number)
                             data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+udh_length+ieid+msg_identifier+msg_parts+msg_part_num+short_message)#+sar_msg_ref_num+sar_segment_seqnum+sar_total_segments)
-                            smpp_socket.send_data(data)
-                            variable_1=variable_1+1
-                else:
-                    if len(msg)<=255:
+                            if int(r_dr)==1:
+                                msg_sent=smpp_socket.send_data(data)
+                                if msg_sent==True:
+                                    logger.debug('SubmitSM sent successfully')
+                                else:
+                                    logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+                                #for i in range(0,len(temp_msg_wrapd))
+                                status=deliver_sm()
+                                if status:
+                                    logger.debug('DeliverSM Received and Response sent')
+                                else:
+                                    logger.error('DeliverSM not received.')
+                            else:
+                                msg_sent=smpp_socket.send_data(data)
+                                if msg_sent==True:
+                                    logger.debug('SubmitSM sent successfully')
+                                else:
+                                    logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+                elif payload=='sar':
+                    if len(msg_encoded)<=252:
                         destination_addr=str(x).encode()
                         sequence_number=randint(1,65536)
-                        short_message=msg.encode()
+                        short_message=msg_encoded
                         sm_length=pack(">B",len(short_message))
                         command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
                         data=pack('!4I',command_length,command_id,command_status,sequence_number)
                         data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message)
-                        smpp_socket.send_data(data)
-                        variable_1=variable_1+1
-                    elif len(msg)>255:
+                        if int(r_dr)==1:
+                            msg_sent=smpp_socket.send_data(data)
+                            if msg_sent==True:
+                                logger.debug('SubmitSM sent successfully')
+                            else:
+                                logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+                            #for i in range(0,len(temp_msg_wrapd))
+                            status=deliver_sm()
+                            if status:
+                                logger.debug('DeliverSM Received and Response sent')
+                            else:
+                                logger.error('DeliverSM not received.')
+                        else:
+                            msg_sent=smpp_socket.send_data(data)
+                            if msg_sent==True:
+                                logger.debug('SubmitSM sent successfully')
+                            else:
+                                logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+                    elif len(msg_encoded)>252:
                         destination_addr=str(x).encode()
                         sequence_number=randint(1,65536)
-                        temp_msg_wrapd=wrap(msg,width=255)
+                        temp_msg_wrapd=[]
+
+                        for i in range(0,len(msg_encoded),152):
+                            if len(msg_encoded)<(i+152):
+                                temp_msg_wrapd.append(msg_encoded[i:])
+                            else:
+                                temp_msg_wrapd.append(msg_encoded[i:(i+152)])
                         if len(temp_msg_wrapd)>255:
-                            print('Too Long Message')
+                            logger.error('Too Long Message')
                             return None
                         sar_seq=randint(1,255)
                         for i in range(0,len(temp_msg_wrapd)):
@@ -197,8 +284,53 @@ def submit_sm_load():
                             command_length=49+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
                             data=pack('!4I',command_length,command_id,command_status,sequence_number)
                             data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message+sar_msg_ref_num+sar_segment_seqnum+sar_total_segments)
-                            smpp_socket.send_data(data)
-                            variable_1=variable_1+1
+                            if int(r_dr)==1:
+                                msg_sent=smpp_socket.send_data(data)
+                                if msg_sent==True:
+                                    logger.debug('SubmitSM sent successfully')
+                                else:
+                                    logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+                                #for i in range(0,len(temp_msg_wrapd))
+                                status=deliver_sm()
+                                if status:
+                                    logger.debug('DeliverSM Received and Response sent')
+                                else:
+                                    logger.error('DeliverSM not received.')
+                            else:
+                                msg_sent=smpp_socket.send_data(data)
+                                if msg_sent==True:
+                                    logger.debug('SubmitSM sent successfully')
+                                else:
+                                    logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+                elif payload=='payload':
+                    sequence_number=randint(1,65536)
+                    destination_addr=str(x).encode()
+                    short_message=msg_encoded
+                    sm_length=pack(">B",0)
+                    command_length=37+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
+                    ##################################Payload Parameter##################################
+                    tag=pack('>H',1060)
+                    length=pack('>H',len(short_message))
+                    data=pack('!4I',command_length,command_id,command_status,sequence_number)
+                    data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+tag+length+short_message)
+                    if int(r_dr)==1:
+                        msg_sent=smpp_socket.send_data(data)
+                        if msg_sent==True:
+                            logger.debug('SubmitSM sent successfully')
+                        else:
+                            logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+                        #for i in range(0,len(temp_msg_wrapd))
+                        status=deliver_sm()
+                        if status:
+                            logger.debug('DeliverSM Received and Response sent')
+                        else:
+                            logger.error('DeliverSM not received.')
+                    else:
+                        msg_sent=smpp_socket.send_data(data)
+                        if msg_sent==True:
+                            logger.debug('SubmitSM sent successfully')
+                        else:
+                            logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+                else:
+                    logger.error("Payload type error.")
             time.sleep(1.0-((time.time()-start_time)%1.0))
-            #print(1.0-((time.time()-start_time)%1.0))
-    print(variable_1)

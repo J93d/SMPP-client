@@ -2,11 +2,10 @@
 
 from struct import pack
 from random import randint
-from textwrap import wrap
 from time import sleep
 
-from deliver_sm import deliver_sm
-from smpp_socket import smpp_socket
+from .deliver_sm import deliver_sm
+from .smpp_socket import smpp_socket
 import logging
 
 logger=logging.getLogger(__name__)
@@ -171,7 +170,7 @@ def submit_sm():
 
             if len(temp_msg_wrapd)>255:
                 logger.error('Too Long Message')
-                return None
+                return False
             udh_length=pack(">B",5)
             ieid=pack(">H",3)
             msg_identifier=pack(">B",randint(0,255))

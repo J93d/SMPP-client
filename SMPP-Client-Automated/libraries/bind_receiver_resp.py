@@ -1,5 +1,5 @@
 from struct import unpack
-from error_codes import error_codes
+from .error_codes import error_codes
 import logging
 
 logger=logging.getLogger(__name__)

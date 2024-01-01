@@ -3,7 +3,10 @@
 from struct import pack
 from random import randint
 
-from smpp_socket import smpp_socket
+from .smpp_socket import smpp_socket
+import logging
+
+logger=logging.getLogger(__name__)
 
 def query_sm():
     command_id=0x00000003
@@ -28,7 +31,11 @@ def query_sm():
         
     source_addr=input('Enter Source Address: ').encode()
 
-    command_length=14+len(source_addr)+len(message_id)
+    command_length=20+len(source_addr)+len(message_id)
     data=pack('!4I',command_length,command_id,command_status,sequence_number)
     data=(data+message_id+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00')
-    smpp_socket.send_data(data)
+    enql_sent=smpp_socket.send_data(data)
+    if enql_sent==True:
+        logger.debug('Bind Receiver sent successfully')
+    else:
+        logger.error('Bind Receiver not sent. Reason: {}'.format(enql_sent))

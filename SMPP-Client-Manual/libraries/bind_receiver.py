@@ -2,7 +2,7 @@
 
 from struct import pack
 from random import randint
-from smpp_socket import smpp_socket
+from .smpp_socket import smpp_socket
 import logging
 
 logger=logging.getLogger(__name__)

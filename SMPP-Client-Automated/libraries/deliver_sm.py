@@ -1,6 +1,6 @@
 from struct import pack, unpack
-from error_codes import error_codes
-from smpp_socket import *
+from .error_codes import error_codes
+from .smpp_socket import *
 import logging
 
 logger=logging.getLogger(__name__)

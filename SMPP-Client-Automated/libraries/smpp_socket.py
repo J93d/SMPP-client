@@ -2,17 +2,18 @@
 
 #standard libraries
 from struct import unpack
+import ipaddress
 #custom libraries
-from bind_receiver_resp import bind_receiver_resp
-from bind_transceiver_resp import bind_transceiver_resp
-from bind_transmitter_resp import bind_transmitter_resp
-from cancel_sm_resp import cancel_sm_resp
-from enquire_link_resp import enquire_link_resp
-from query_sm_resp import query_sm_resp
-from replace_sm_resp import replace_sm_resp
-from submit_multi_resp import submit_multi_resp
-from submit_sm_resp import submit_sm_resp
-from unbind_resp import unbind_resp
+from .bind_receiver_resp import bind_receiver_resp
+from .bind_transceiver_resp import bind_transceiver_resp
+from .bind_transmitter_resp import bind_transmitter_resp
+from .cancel_sm_resp import cancel_sm_resp
+from .enquire_link_resp import enquire_link_resp
+from .query_sm_resp import query_sm_resp
+from .replace_sm_resp import replace_sm_resp
+from .submit_multi_resp import submit_multi_resp
+from .submit_sm_resp import submit_sm_resp
+from .unbind_resp import unbind_resp
 
 
 class smpp_socket:
@@ -26,7 +27,12 @@ class smpp_socket:
         import socket
         global sock_conn
         try:
-            sock_conn=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+            if ipaddress.ip_address(address[0]).version == 4:
+                sock_conn=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+            elif ipaddress.ip_address(address[0]).version == 6:
+                sock_conn=socket.socket(socket.AF_INET6,socket.SOCK_STREAM)
+            else:
+                return "IP format is wrong"
             sock_conn.settimeout(5)
             try:
                 sock_conn.connect((address))

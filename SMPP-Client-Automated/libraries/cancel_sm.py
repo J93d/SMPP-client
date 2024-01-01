@@ -2,8 +2,11 @@
 
 from struct import pack
 from random import randint
+import logging
 
-from smpp_socket import smpp_socket
+logger=logging.getLogger(__name__)
+
+from .smpp_socket import smpp_socket
 
 def cancel_sm():
     command_id=0x00000004
