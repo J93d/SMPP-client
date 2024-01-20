@@ -131,7 +131,7 @@ def submit_sm():
         logger.error("Encoding type error.")
 
     if payload=='udh':                                                         #This is for UDH message
-        if len(msg_encoded)<=152:
+        if len(msg_encoded)<=140:
             sequence_number=randint(1,65536)
             short_message=msg_encoded
             sm_length=pack(">B",len(short_message))
@@ -157,16 +157,16 @@ def submit_sm():
                 else:
                     logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
             
-        elif len(msg_encoded)>152:
+        elif len(msg_encoded)>140:
             esm_class=pack(">B",(int(e_class)+64))
             sequence_number=randint(1,65536)       
             temp_msg_wrapd=[]
 
-            for i in range(0,len(msg_encoded),152):
-                if len(msg_encoded)<(i+152):
+            for i in range(0,len(msg_encoded),140):
+                if len(msg_encoded)<(i+140):
                     temp_msg_wrapd.append(msg_encoded[i:])
                 else:
-                    temp_msg_wrapd.append(msg_encoded[i:(i+152)])
+                    temp_msg_wrapd.append(msg_encoded[i:(i+140)])
 
             if len(temp_msg_wrapd)>255:
                 logger.error('Too Long Message')
@@ -234,11 +234,11 @@ def submit_sm():
             sequence_number=randint(1,65536)
             temp_msg_wrapd=[]
 
-            for i in range(0,len(msg_encoded),152):
-                if len(msg_encoded)<(i+152):
+            for i in range(0,len(msg_encoded),252):
+                if len(msg_encoded)<(i+252):
                     temp_msg_wrapd.append(msg_encoded[i:])
                 else:
-                    temp_msg_wrapd.append(msg_encoded[i:(i+152)])
+                    temp_msg_wrapd.append(msg_encoded[i:(i+252)])
             if len(temp_msg_wrapd)>255:
                 logger.error('Too Long Message')
                 return None
