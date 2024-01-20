@@ -7,26 +7,16 @@ import logging
 
 logger=logging.getLogger(__name__)
 
-def bind_receiver():
+def bind_receiver(system_id,password,system_type=str(""),addr_ton=int(1),addr_npi=int(1)):
     command_id=0x00000001
     command_status=0x00000000
     sequence_number=randint(1,4294967294)
-    system_id=input('*Enter SystemID: ').encode('utf-8')
-    password=input('*Enter Password: ').encode('utf-8')
-    system_type=input('Enter System Type: ').encode('utf-8')
-    temp_ton=input('Enter Type of Nymber (TON)(Default 1): ')
-    temp_npi=input('Enter Numbering Plan Indicator (NPI)(Default 1): ')
-    interface_version=pack(">b",3)
-    
-    if temp_ton:
-        addr_ton=pack(">b",int(temp_ton))
-    else:
-        addr_ton=pack(">b",1)
-
-    if temp_npi:
-        addr_npi=pack(">b",int(temp_npi))
-    else:
-        addr_npi=pack(">b",1)
+    system_id=system_id.encode('utf-8')
+    password=password.encode('utf-8')
+    system_type=system_type.encode('utf-8')
+    interface_version=pack(">b",5)
+    addr_ton=pack(">b",int(addr_ton))
+    addr_npi=pack(">b",int(addr_npi))
     
     command_length=len(system_id)+len(password)+len(system_type)+23
     data=pack('!4I',command_length,command_id,command_status,sequence_number)

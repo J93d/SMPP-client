@@ -10,116 +10,50 @@ import logging
 
 logger=logging.getLogger(__name__)
 
-def submit_sm():
-    command_id=0x00000004
-    command_status=0x00000000
-    s_type=input("Enter the Service Type (Default NULL): ")
+def submit_sm(
+        source_addr,
+        destination_addr,
+        service_type = str(""),
+        source_addr_ton = int(0),
+        source_addr_npi = int(0),
+        dest_addr_ton = int(0),
+        dest_addr_npi = int(0),
+        e_class = int(0),
+        protocol_id = int(0),
+        priority_flag = int(0),
+        schedule_delivery_time = str(""),
+        validity_period = str(""),
+        r_dr = int(0),
+        replace_if_present_flag = int(0),
+        dcs = int(0),
+        sm_default_msg_id=int(0),
+        payload=str('sar'),
+        encoding=str('default'),
+        msg=str("Hello World!")
+        ):
     
-    if s_type:
-        service_type=s_type.encode()
-    else:
-        service_type=str('CMT').encode()
-        
-    o_ton=input('Enter Source Type of Nymber (TON)(Default 1): ')
-    
-    if o_ton:
-        source_addr_ton=pack(">B",int(o_ton))
-    else:
-        source_addr_ton=pack(">B",1)
-        
-    o_npi=input('Enter Source Numbering Plan Indicator (NPI)(Default 1): ')
-    
-    if o_npi:
-        source_addr_npi=pack(">B",int(o_npi))
-    else:
-        source_addr_npi=pack(">B",1)
-        
-    source_addr=input('Enter Source Address: ').encode()
-    
-    d_ton=input('Enter Destination Type of Nymber (TON)(Default 1): ')
-    
-    if d_ton:
-        dest_addr_ton=pack(">B",int(d_ton))
-    else:
-        dest_addr_ton=pack(">B",1)
-        
-    d_npi=input('Enter Destination Numbering Plan Indicator (NPI)(Default 1): ')
-    
-    if d_npi:
-        dest_addr_npi=pack(">B",int(d_npi))
-    else:
-        dest_addr_npi=pack(">B",1)
-        
-    destination_addr=input('Enter Destination Address: ').encode()
-    
-    e_class=input('Enter ESM class(Default 0): ')
-    
-    if e_class:                                                         
-        esm_class=pack(">B",int(e_class))
-    else:
-        esm_class=pack(">B",0)
-        
-    pid=input('Enter Protocol ID(Default 0): ')
-    
-    if pid:
-        protocol_id=pack(">B",int(pid))
-    else:
-        protocol_id=pack(">B",0)    
-    
-    pri_flag=input('Enter Priority Flag(Default 0): ')
-    
-    if pri_flag:
-        priority_flag=pack(">B",int(pri_flag))
-    else:
-        priority_flag=pack(">B",0)
-    
-    schedule_delivery_time=input('Enter Scheduled Delivery Time(Default NULL): ').encode()
-    
-    validity_period=input('Enter Validity Period(Default NULL): ').encode()
-    
-    r_dr=input('Enter Registered Delivery Required(Default 0): ')
-    
-    if r_dr:
-        registered_delivery=pack(">B",int(r_dr))
-    else:
-        registered_delivery=pack(">B",0)
-    
-    rep_present=input('Set Replace if Present Flag(Default 0): ')
-    
-    if rep_present:
-        replace_if_present_flag=pack(">B",int(rep_present))
-    else:
-        replace_if_present_flag=pack(">B",0)
-    
-    dcs=input('Enter Data Coding Scheme(Default 0): ')
-    
-    if dcs:
-        data_coding=pack(">B",int(dcs))
-    else:
-        data_coding=pack(">B",0)
-    
-    default_mid=input('Enter Default Message ID(Default 0): ')
-    
-    if default_mid:
-        sm_default_msg_id=pack(">B",int(default_mid))
-    else:
-        sm_default_msg_id=pack(">B",0)
-        
-    pl=input('Enter payload type udh/sar/payload(Default sar): ')
+    command_id = 0x00000004
+    command_status = 0x00000000
+    service_type = service_type.encode()
+    source_addr_ton = pack(">B",int(source_addr_ton))
+    source_addr_npi = pack(">B",int(source_addr_npi))
+    source_addr = source_addr.encode()
+    dest_addr_ton = pack(">B",int(dest_addr_ton))
+    dest_addr_npi = pack(">B",int(dest_addr_npi))
+    destination_addr = destination_addr.encode()
+    esm_class = pack(">B",int(e_class))
+    protocol_id = pack(">B",int(protocol_id))    
+    priority_flag = pack(">B",int(priority_flag))
+    schedule_delivery_time = schedule_delivery_time.encode()
+    validity_period = validity_period.encode()
+    registered_delivery=pack(">B",int(r_dr))
+    replace_if_present_flag=pack(">B",int(replace_if_present_flag))
+    data_coding=pack(">B",int(dcs))
+    sm_default_msg_id=pack(">B",int(sm_default_msg_id))
+    payload=payload.lower()
+    encoding=encoding.lower()
 
-    if pl:
-        payload=pl.lower()
-    else:
-        payload=str('sar')
-
-    en=input('Enter for specific encoding type Latin/Unicode(If default leave blank): ')
-
-    if en:
-        encoding=en.lower()
-    else:
-        encoding=str('default')
-
-    msg=input('Enter your message: ')
+    msg=msg
 
     if encoding=="latin":
         msg_encoded=msg.encode('iso-8859-1')
@@ -129,9 +63,10 @@ def submit_sm():
         msg.encode()
     else:
         logger.error("Encoding type error.")
-
-    if payload=='udh':                                                         #This is for UDH message
-        if len(msg_encoded)<=152:
+    
+    #UDH message
+    if payload=='udh':                                                         
+        if len(msg_encoded)<=140:
             sequence_number=randint(1,65536)
             short_message=msg_encoded
             sm_length=pack(">B",len(short_message))
@@ -156,17 +91,17 @@ def submit_sm():
                     logger.debug('SubmitSM sent successfully')
                 else:
                     logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
-            
-        elif len(msg_encoded)>152:
+        #UDH Multipart    
+        elif len(msg_encoded)>140:
             esm_class=pack(">B",(int(e_class)+64))
             sequence_number=randint(1,65536)       
             temp_msg_wrapd=[]
 
-            for i in range(0,len(msg_encoded),152):
-                if len(msg_encoded)<(i+152):
+            for i in range(0,len(msg_encoded),140):
+                if len(msg_encoded)<(i+140):
                     temp_msg_wrapd.append(msg_encoded[i:])
                 else:
-                    temp_msg_wrapd.append(msg_encoded[i:(i+152)])
+                    temp_msg_wrapd.append(msg_encoded[i:(i+140)])
 
             if len(temp_msg_wrapd)>255:
                 logger.error('Too Long Message')
@@ -203,7 +138,8 @@ def submit_sm():
                         logger.debug('SubmitSM sent successfully')
                     else:
                         logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
-    elif payload=='sar':                                                         #This is for SAR message
+    #SAR Message
+    elif payload=='sar':
         if len(msg_encoded)<=252:
             sequence_number=randint(1,65536)
             short_message=msg_encoded
@@ -230,15 +166,16 @@ def submit_sm():
                     logger.debug('SubmitSM sent successfully')
                 else:
                     logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+        #SAR Multipart
         elif len(msg_encoded)>252:
             sequence_number=randint(1,65536)
             temp_msg_wrapd=[]
 
-            for i in range(0,len(msg_encoded),152):
-                if len(msg_encoded)<(i+152):
+            for i in range(0,len(msg_encoded),252):
+                if len(msg_encoded)<(i+252):
                     temp_msg_wrapd.append(msg_encoded[i:])
                 else:
-                    temp_msg_wrapd.append(msg_encoded[i:(i+152)])
+                    temp_msg_wrapd.append(msg_encoded[i:(i+252)])
             if len(temp_msg_wrapd)>255:
                 logger.error('Too Long Message')
                 return None
@@ -285,6 +222,7 @@ def submit_sm():
                         logger.debug('SubmitSM sent successfully')
                     else:
                         logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+    #Payload
     elif payload=='payload':
         sequence_number=randint(1,65536)
         short_message=msg_encoded
