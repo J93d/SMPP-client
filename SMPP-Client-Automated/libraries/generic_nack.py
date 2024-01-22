@@ -1,7 +1,7 @@
 from struct import pack
 import logging
 
-logger=logging.getlogger(__name__)
+logger=logging.getLogger(__name__)
 
 def generic_nack():
     command_id=0x80000000

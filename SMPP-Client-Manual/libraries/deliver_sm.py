@@ -1,22 +1,29 @@
 from struct import pack, unpack
 from .error_codes import error_codes
 from .smpp_socket import *
+from .generic_nack import generic_nack
 import logging
 
 logger=logging.getLogger(__name__)
 
 def dlr_parser(buffer,i):
     buffer=buffer
-    logger.debug("Length of buffer: {}".format(len(buffer)))
-    msg_length=int("".join([str(i) for i in list(unpack('!I',buffer[0:4]))]))
-    sequence_number=int("".join([str(i) for i in list(unpack('!I',buffer[12:16]))]))
-    index=buffer.find(b'\x00',19)
-    originator_address=buffer[19:index].decode()
-    index1=buffer.find(b'\x00',(index+3))
-    destination_address=buffer[(index+3):index1].decode()
-    text_length=int("".join([str(i) for i in list(unpack('>B',buffer[(index1+10):(index1+11)]))]))
-    message=buffer[(index1+11):(index1+11+text_length)].decode()
-    logger.info("Delivery data: {}".format(message))
+    try:
+        logger.debug("Length of buffer: {}".format(len(buffer)))
+        msg_length=int("".join([str(i) for i in list(unpack('!I',buffer[0:4]))]))
+        sequence_number=int("".join([str(i) for i in list(unpack('!I',buffer[12:16]))]))
+        index=buffer.find(b'\x00',19)
+        originator_address=buffer[19:index].decode()
+        index1=buffer.find(b'\x00',(index+3))
+        destination_address=buffer[(index+3):index1].decode()
+        text_length=int("".join([str(i) for i in list(unpack('>B',buffer[(index1+10):(index1+11)]))]))
+        message=buffer[(index1+11):(index1+11+text_length)].decode()
+        logger.info("Delivery data: {}".format(message))
+    except Exception as e:
+        logger.error("DeliverSM could not be parsed. Sending Generic Nack.")
+        data=generic_nack()
+        smpp_socket.send_data(data)
+        return False
 
     data=pack('!4I',int(17),0x80000005,0x00000000,int(sequence_number))
     data=data+b'\x00'
