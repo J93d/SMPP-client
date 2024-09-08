@@ -48,7 +48,7 @@ def get_user_input(timeout=5):
 # Function to start and stop trace
 def tracer(status,_name=str(''),pid=str(''),filter=str(''),path=str('')):
     #Comment this line for enabling trace. This is currently made only for linux system.
-    return None
+    #return None
     if filter is None:
         filter = str('')
     if path is None:
@@ -58,11 +58,13 @@ def tracer(status,_name=str(''),pid=str(''),filter=str(''),path=str('')):
         try:
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, preexec_fn=os.setsid)
             logger.info(f'Trace started with PID: {os.getpgid(process.pid)}')
+            sleep(2)
         except Exception as e:
             logger.error(f'Tcpdump could not be started for the following exception: {e}')
         return str(os.getpgid(process.pid))
     elif status == 'stop':
         try:
+            sleep(5)
             subprocess.run(['sudo','-s','pkill','TERM','-g',pid], capture_output=True, text=True, check=True)
             logger.info('Trace stopped.')
         except Exception as e:
@@ -131,8 +133,66 @@ if __name__=="__main__":
             user_input_row = get_user_input(timeout=10)
 
             if str("receiver") in sheet_account[f"A{user_input_row+1}"].value.lower():
-                
-                print(f"{row_index}: {cell[0]}")
+                bind_receiver(system_id=sheet_account[f"B{user_input_row+1}"].value,password=sheet_account[f"C{user_input_row+1}"].value)
+            elif str("transmitter") in sheet_account[f"A{user_input_row+1}"].value.lower():
+                bind_transmitter(system_id=sheet_account[f"B{user_input_row+1}"].value,password=sheet_account[f"C{user_input_row+1}"].value)
+            elif str("transceiver") in sheet_account[f"A{user_input_row+1}"].value.lower():
+                bind_transceiver(system_id=sheet_account[f"B{user_input_row+1}"].value,password=sheet_account[f"C{user_input_row+1}"].value)
+
+            try:
+                while n<=0:
+                    headers_submit = [cell.value for cell in sheet_submit[1][1:]]
+                    print("Test Cases:")
+                    for row_index, cell in enumerate(sheet_submit.iter_rows(min_row=2, max_col=1, values_only=True), start=2):
+                        print(f"{row_index-1}: {cell[0]}")
+                    print("{sheet_submit.max_row}: QuerySM\n{sheet_submit.max_row+1}: CancelSM\n{sheet_submit.max_row+2}: ReplcaSM\n{sheet_submit.max_row+3}: Unbind\n{sheet_submit.max_row+4}: Run All\nEnter the Test Case to be executed: "),end="")
+
+                    user_input_row = get_user_input()
+
+                    while user_input_row is None:
+                        try:
+                            enquire_link()
+                        except Exception as e:
+                            logger.error(f"Exception occurred: {e}")
+                        user_input_row = get_user_input()
+
+                    logger.info(f"{user_input_row} input received")
+
+                    if int(user_input_row)==(sheet_submit.max_row):
+                        process = tracer(status='start', filter=trace_filter,_name='QuerySM')
+                        query_sm()
+                        tracer(status='stop', pid=process)
+                    elif int(user_input_row)==(sheet_submit.max_row+1):
+                        process = tracer(status='start', filter=trace_filter,_name='CancelSM')
+                        cancel_sm()
+                        tracer(status='stop', pid=process)
+                    elif int(user_input_row)==(sheet_submit.max_row+2):
+                        process = tracer(status='start', filter=trace_filter,_name='ReplaceSM')
+                        replace_sm()
+                        tracer(status='stop', pid=process)
+                    elif int(user_input_row)==(sheet_submit.max_row+3):
+                        unbind()
+                        sleep(2)
+                        smpp_socket.disconnect(close=1)
+                        workbook.close()
+                        n+=1
+                    elif int(user_input_row)==(sheet_submit.max_row+4):
+                        test_case_list = [cell[0].value for cell in sheet_submit[f"A{2}:A{100}"] if cell[0].value is not None]
+
+                        for tc in test_case_list:
+                            # Start Trace
+                            process = tracer(status='start', filter=trace_filter,_name=tc)
+                            test_case = test_case_list.index(tc)+2
+                            row_value = [cell.value for cell in sheet_submit[f"A{test_case}:T{test_case}"][0]]
+                            formatted_values = ', '.join([f'{header}="{value}"' for header, value in zip(headers_submit, row_values[1:]) if value is not None])
+                            eval(f"submit_sm({formatted_values})")
+                            logger.error(f"{row_values[0]} Test Case Executed.")
+                            tracer(status='stop',pid=process)
+                        unbind()
+                        sleep(2)
+                        smpp_socket.disconnect(close=1)
+                        workbook.close()
+                        n+=1
 
             
     except KeyboardInterrupt:
