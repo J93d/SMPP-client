@@ -5,49 +5,32 @@ from random import randint
 from textwrap import wrap
 
 from .smpp_socket import smpp_socket
+from .gsm_encoding import gsm_encoding
+
+import logging
+logger = logging.getLogger(__name__)
 
 def replace_sm():
     command_id=0x00000007
     command_status=0x00000000
 
-    message_id=input("Enter the messaged ID to be cancelled: ").encode()
+    message_id=input("Enter the messaged ID to be replaced: ").encode()
             
-    o_ton=input('Enter Source Type of Nymber (TON)(Default 1): ')
+    o_ton=input('Enter Source Type of Number (TON)(Default 0): ')
     
     if o_ton:
         source_addr_ton=pack(">B",int(o_ton))
     else:
-        source_addr_ton=pack(">B",1)
+        source_addr_ton=pack(">B",0)
         
-    o_npi=input('Enter Source Numbering Plan Indicator (NPI)(Default 1): ')
+    o_npi=input('Enter Source Numbering Plan Indicator (NPI)(Default 0): ')
     
     if o_npi:
         source_addr_npi=pack(">B",int(o_npi))
     else:
-        source_addr_npi=pack(">B",1)
+        source_addr_npi=pack(">B",0)
         
     source_addr=input('Enter Source Address: ').encode()
-#################################################################    
-    e_class=input('Enter ESM class(Default 0): ')
-    
-    if e_class:                                                         
-        esm_class=pack(">B",int(e_class))
-    else:
-        esm_class=pack(">B",0)
-        
-    pid=input('Enter Protocol ID(Default 0): ')
-    
-    if pid:
-        protocol_id=pack(">B",int(pid))
-    else:
-        protocol_id=pack(">B",0)    
-    
-    pri_flag=input('Enter Priority Flag(Default 0): ')
-    
-    if pri_flag:
-        priority_flag=pack(">B",int(pri_flag))
-    else:
-        priority_flag=pack(">B",0)
     
     schedule_delivery_time=input('Enter Scheduled Delivery Time(Default NULL): ').encode()
     
@@ -60,95 +43,36 @@ def replace_sm():
     else:
         registered_delivery=pack(">B",0)
     
-    rep_present=input('Set Replace if Present Flag(Default 0): ')
-    
-    if rep_present:
-        replace_if_present_flag=pack(">B",int(rep_present))
-    else:
-        replace_if_present_flag=pack(">B",0)
-    
-    dcs=input('Enter Data Coding Scheme(Default 0): ')
-    
-    if dcs:
-        data_coding=pack(">B",int(dcs))
-    else:
-        data_coding=pack(">B",0)
-    
     default_mid=input('Enter Default Message ID(Default 0): ')
-    
+
     if default_mid:
         sm_default_msg_id=pack(">B",int(default_mid))
     else:
         sm_default_msg_id=pack(">B",0)
-        
+
     msg=input('Enter your message: ')
-    if e_class:                                                         #This is for UDH message
-        if len(msg)<=150:
-            sequence_number=randint(1,65536)
-            short_message=msg.encode()
-            sm_length=pack(">B",len(short_message))
-            command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
-            data=pack('!4I',command_length,command_id,command_status,sequence_number)
-            data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message)
-            smpp_socket.send_data(data)
-        elif len(msg)>150:
-            esm_class=pack(">B",64)
-            sequence_number=randint(1,65536)       
-            temp_msg_wrapd=wrap(msg,width=150)
-            if len(temp_msg_wrapd)>255:
-                print('Too Long Message')
-                return None
-            udh_length=pack(">B",5)
-            ieid=pack(">H",3)
-            msg_identifier=pack(">B",randint(0,255))
-            for i in range(0,len(temp_msg_wrapd)):
-                short_message=temp_msg_wrapd[i].encode()
-                sm_length=pack(">B",(len(short_message)+int(6)))
+    
+    if encoding == "Latin":
+        msg_encoded=msg.encode('iso-8859-1')
+    elif encoding == "GSM":
+        msg_encoded=gsm_encoding(msg)
+    elif encoding == "Unicode":
+        msg_encoded=msg.encode('utf-16-be')
+        
+    # Only payload message is supported and also DCS option unavailable, hence unicode cannot be properly encoded
 
-                msg_parts=pack(">B",len(temp_msg_wrapd))
-                msg_part_num=pack(">B",(i+1))
-
-                command_length=39+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
-                data=pack('!4I',command_length,command_id,command_status,sequence_number)
-                data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+udh_length+ieid+msg_identifier+msg_parts+msg_part_num+short_message)
-                smpp_socket.send_data(data)                
-    else:                                                         #This is for SAR message
-        if len(msg)<=255:
-            sequence_number=randint(1,65536)
-            short_message=msg.encode()
-            sm_length=pack(">B",len(short_message))
-            command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
-            data=pack('!4I',command_length,command_id,command_status,sequence_number)
-            data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message)
-            smpp_socket.send_data(data)
-        elif len(msg)>255:
-            sequence_number=randint(1,65536)
-            temp_msg_wrapd=wrap(msg,width=255)
-            if len(temp_msg_wrapd)>255:
-                print('Too Long Message')
-                return None
-            sar_seq=randint(1,255)
-            for i in range(0,len(temp_msg_wrapd)):
-                short_message=temp_msg_wrapd[i].encode()
-                sm_length=pack(">B",(len(short_message)))
-                ####################################optional parameters################################
-                #sar_msg_ref_num
-                tag1=pack(">H",524)
-                length1=pack(">H",2)
-                ref1=pack(">H",sar_seq)
-                sar_msg_ref_num=(tag1+length1+ref1)
-                #sar_segment_seqnum
-                tag2=pack(">H",527)
-                length2=pack(">H",1)
-                seq2=pack(">B",(i+1))
-                sar_segment_seqnum=(tag2+length2+seq2)
-                #sar_total_segments
-                tag3=pack(">H",526)
-                length3=pack(">H",1)
-                size3=pack(">B",len(temp_msg_wrapd))
-                sar_total_segments=(tag3+length3+size3)
-
-                command_length=49+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
-                data=pack('!4I',command_length,command_id,command_status,sequence_number)
-                data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message+sar_msg_ref_num+sar_segment_seqnum+sar_total_segments)        
-                smpp_socket.send_data(data)
+    sequence_numer=randint(1,65536)
+    short_message=msg_encoded
+    sm_length=pack(">B",0)
+    command_length=29+len(message_id)+len(source_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
+    ###################################payload parameters#######################################
+    #message_payload
+    tag=pack(">H",1060)
+    length=pack(">H",len(short_message))
+    data=pack('!4I',command_length,command_id,command_status,sequence_number)
+    data=(data+message_id+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+sm_default_msg_id+sm_length+tag+length+short_message)
+    msg_sent=smpp_socket.send_data(data)
+    if msg_sent is True:
+        logger.debug('SubmitSM sent successfully.')
+    else:
+        logger.error(f'SubmitSM not sent. Reason: {msg_sent}')
