@@ -14,6 +14,10 @@ from .replace_sm_resp import replace_sm_resp
 from .submit_multi_resp import submit_multi_resp
 from .submit_sm_resp import submit_sm_resp
 from .unbind_resp import unbind_resp
+from .deliver_sm import deliver_sm
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class smpp_socket:
@@ -48,39 +52,47 @@ class smpp_socket:
             try:
                 buffer=sock_conn.recv(500)
                 if len(buffer)>0:
-                    l=list(unpack('!I',buffer[4:8]))
-                    if l[0]==2147483649:
-                        bind_receiver_resp(buffer)          #Done
-                        return True
-                    elif l[0]==2147483650:
-                        bind_transmitter_resp(buffer)          #Done
-                        return True
-                    elif l[0]==2147483651:
-                        query_sm_resp(buffer)
-                        return True
-                    elif l[0]==2147483652:
-                        submit_sm_resp(buffer)
-                        return True
-                    elif l[0]==2147483654:
-                        unbind_resp(buffer)          #Done
-                        return True
-                    elif l[0]==2147483655:
-                        replace_sm_resp(buffer)
-                        return True
-                    elif l[0]==2147483656:
-                        cancel_sm_resp(buffer)
-                        return True
-                    elif l[0]==2147483657:
-                        bind_transceiver_resp(buffer)          #Done
-                        return True
-                    elif l[0]==2147483669:
-                        enquire_link_resp(buffer)
-                        return True
-                    elif l[0]==2147483681:
-                        submit_multi_resp(buffer)
-                        return True
-                    else:
-                        return str("Umknown data received")
+                    while len(buffer) >= 4:
+                        packet_length = int.from_bytes(buffer[:4], 'big')
+                        packet = buffer[:packet_length]
+                        command_id = list(unpack('!I',packet[4:8]))
+                        if command_id[0]==2147483649:
+                            bind_receiver_resp(packet)          #Done
+                            return True
+                        elif command_id[0]==2147483650:
+                            bind_transmitter_resp(packet)          #Done
+                            return True
+                        elif command_id[0]==2147483651:
+                            query_sm_resp(packet)
+                            return True
+                        elif command_id[0]==2147483652:
+                            submit_sm_resp(packet)
+                            return True
+                        elif command_id[0]==2147483654:
+                            unbind_resp(packet)          #Done
+                            return True
+                        elif command_id[0]==2147483655:
+                            replace_sm_resp(packet)
+                            return True
+                        elif command_id[0]==2147483656:
+                            cancel_sm_resp(packet)
+                            return True
+                        elif command_id[0]==2147483657:
+                            bind_transceiver_resp(packet)          #Done
+                            return True
+                        elif command_id[0]==2147483669:
+                            enquire_link_resp(packet)
+                            return True
+                        elif command_id[0]==2147483681:
+                            submit_multi_resp(packet)
+                            return True
+                        elif command_id[]==5:
+                            delr_data=deliver_sm(packet)
+                            socket.conn.send(dlr_data)
+                            logger.error("DeliverSM Response sent.")
+                        else:
+                            return str("Umknown data received")
+                        buffer = buffer[packet_length:]
                 else:
                     return str("No response received")
             except Exception as e:
