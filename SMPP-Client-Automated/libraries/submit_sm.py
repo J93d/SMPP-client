@@ -2,7 +2,6 @@
 
 from struct import pack
 from random import randint
-from time import sleep
 
 from .deliver_sm import deliver_sm
 from .smpp_socket import smpp_socket
@@ -12,13 +11,13 @@ import logging
 logger=logging.getLogger(__name__)
 
 def submit_sm(
-        source_addr,
-        destination_addr,
         service_type = str(""),
         source_addr_ton = int(0),
         source_addr_npi = int(0),
+        source_addr=str(""),
         dest_addr_ton = int(0),
         dest_addr_npi = int(0),
+        destination_addr=str(""),
         e_class = int(0),
         protocol_id = int(0),
         priority_flag = int(0),
@@ -29,8 +28,8 @@ def submit_sm(
         dcs = int(0),
         sm_default_msg_id=int(0),
         payload=str('sar'),
-        encoding=str('default'),
-        msg=str("Hello World!")
+        encoding=str(''),
+        msg=str("Hello World")
         ):
     
     command_id = 0x00000004
@@ -63,7 +62,7 @@ def submit_sm(
     elif encoding=="Unicode":
         msg_encoded=msg.encode('utf-16-be')
     else:
-        logger.error("Encoding type error.")
+        msg_encoded=msg.encode()
     
     #UDH message
     if payload=='udh':                                                         
@@ -74,24 +73,11 @@ def submit_sm(
             command_length=33+len(service_type)+len(source_addr)+len(destination_addr)+len(schedule_delivery_time)+len(validity_period)+len(short_message)
             data=pack('!4I',command_length,command_id,command_status,sequence_number)
             data=(data+service_type+b'\x00'+source_addr_ton+source_addr_npi+source_addr+b'\x00'+dest_addr_ton+dest_addr_npi+destination_addr+b'\x00'+esm_class+protocol_id+priority_flag+schedule_delivery_time+b'\x00'+validity_period+b'\x00'+registered_delivery+replace_if_present_flag+data_coding+sm_default_msg_id+sm_length+short_message)
-            if int(r_dr)==1:
-                msg_sent=smpp_socket.send_data(data)
-                if msg_sent==True:
-                    logger.debug('SubmitSM sent successfully')
-                else:
-                    logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
-                sleep(5)
-                status=deliver_sm()
-                if status:
-                    logger.debug('DeliverSM Received and Response sent')
-                else:
-                    logger.error('DeliverSM not received.')
+            msg_sent=smpp_socket.send_data(data)
+            if msg_sent==True:
+                logger.debug('SubmitSM sent successfully')
             else:
-                msg_sent=smpp_socket.send_data(data)
-                if msg_sent==True:
-                    logger.debug('SubmitSM sent successfully')
-                else:
-                    logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
+                logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
         #UDH Multipart    
         elif len(msg_encoded)>152:
             esm_class=pack(">B",(int(e_class)+64))
@@ -125,15 +111,6 @@ def submit_sm(
                     logger.debug('SubmitSM sent successfully')
                 else:
                     logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
-                if int(r_dr)==1:
-                    logger.info("Waiting for Delivery Report...")
-                    sleep(5)
-                    for i in range(0,len(temp_msg_wrapd))
-                        status=deliver_sm()
-                        if status:
-                            logger.debug('DeliverSM Received and Response sent')
-                        else:
-                            logger.error('DeliverSM not received.')
     #SAR Message
     elif payload=='sar':
         if len(msg_encoded)<=252:
@@ -148,18 +125,10 @@ def submit_sm(
                 logger.debug('SubmitSM sent successfully')
             else:
                 logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
-            sleep(5)
-            if int(r_dr)==1:                
-                status=deliver_sm()
-                if status:
-                    logger.debug('DeliverSM Received and Response sent')
-                else:
-                    logger.error('DeliverSM not received.')
         #SAR Multipart
         elif len(msg_encoded)>252:
             sequence_number=randint(1,65536)
             temp_msg_wrapd=[]
-
             for i in range(0,len(msg_encoded),252):
                 if len(msg_encoded)<(i+252):
                     temp_msg_wrapd.append(msg_encoded[i:])
@@ -196,17 +165,8 @@ def submit_sm(
                     logger.debug('SubmitSM sent successfully')
                 else:
                     logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
-                sleep(5)
-            if int(r_dr)==1:
-                logger.info("Waiting for Delivery Report...")
-                for i in range(0,len(temp_msg_wrapd))
-                    status=deliver_sm()
-                    if status:
-                        logger.debug('DeliverSM Received and Response sent')
-                    else:
-                        logger.error('DeliverSM not received.')
     #Payload
-    elif payload=='payload':
+    elif payload=='payload' or payload == '':
         sequence_number=randint(1,65536)
         short_message=msg_encoded
         sm_length=pack(">B",0)
@@ -221,12 +181,5 @@ def submit_sm(
             logger.debug('SubmitSM sent successfully')
         else:
             logger.error('SubmitSM not sent. Reason: {}'.format(msg_sent))
-        sleep(5)
-        if int(r_dr)==1:
-            status=deliver_sm()
-            if status:
-                logger.debug('DeliverSM Received and Response sent')
-            else:
-                logger.error('DeliverSM not received.')
     else:
         logger.error("Payload type error.")
