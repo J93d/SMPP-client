@@ -2,6 +2,7 @@
 
 #Standar libraries called
 from time import sleep
+import subprocess
 import os
 import sys
 import logging
@@ -9,6 +10,7 @@ from logging.handlers import RotatingFileHandler
 import logging.config
 import select
 import openpyxl
+import ast
 
 from libraries.bind_receiver import bind_receiver  
 from libraries.bind_transmitter import bind_transmitter
@@ -48,7 +50,7 @@ def get_user_input(timeout=5):
 # Function to start and stop trace
 def tracer(status,_name=str(''),pid=str(''),filter=str(''),path=str('')):
     #Comment this line for enabling trace. This is currently made only for linux system.
-    #return None
+    return None
     if filter is None:
         filter = str('')
     if path is None:
@@ -185,7 +187,7 @@ if __name__=="__main__":
                             test_case = test_case_list.index(tc)+2
                             row_value = [cell.value for cell in sheet_submit[f"A{test_case}:T{test_case}"][0]]
                             formatted_values = ', '.join([f'{header}="{value}"' for header, value in zip(headers_submit, row_values[1:]) if value is not None])
-                            eval(f"submit_sm({formatted_values})")
+                            ast.literal_eval(f"submit_sm({formatted_values})")
                             logger.error(f"{row_values[0]} Test Case Executed.")
                             tracer(status='stop',pid=process)
                         unbind()
@@ -193,12 +195,20 @@ if __name__=="__main__":
                         smpp_socket.disconnect(close=1)
                         workbook.close()
                         n+=1
-
-            
+                    elif int(user_input_row)<(sheet_submit.max_row):
+                        process = tracer(status='start',filter=trace_filter,_name=sheet_submit[f"A{user_input_row}"][0]]
+                        formatted_values = ', '.join([f'{header}="{value}"' for header, value in zip(headers_submit, row_values[1:]) if value is not None])
+                        ast.literal_eval(f"submit_sm({formatted_values})")
+                        logger.info(f"{row_values[0]} Test Case Executed.")
+                        tracer(status='stop',pid=process)
+                    else:
+                        logger.error("Wrong Input. Please try again.")            
     except KeyboardInterrupt:
         try:
             smpp_socket.disconnect(close=1)
             sys.exit(1)
         except Exception as e:
             logger.warning("Exception in socket disconnection: {}".format(e))
+    except Exception as e:
+        logger.error(f"Exception raised: {e}")
 
